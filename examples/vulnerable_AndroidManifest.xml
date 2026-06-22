@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Synthetic manifest for demonstrating android-exposure-auditor.
+  Every component below is a deliberately-vulnerable pattern. Do not ship this.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.demo">
+
+    <application android:label="demo">
+
+        <!-- Exported activity, no permission guard (CWE-862) -->
+        <activity android:name=".AdminActivity" android:exported="true" />
+
+        <!-- Browsable deep link, zero-permission (deep-link hijack surface) -->
+        <activity android:name=".DeepLinkActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="demoapp" android:host="unlock" />
+            </intent-filter>
+        </activity>
+
+        <!-- Implicitly exported receiver (intent-filter, no explicit exported) -->
+        <receiver android:name=".StateReceiver">
+            <intent-filter>
+                <action android:name="com.example.demo.RESET_STATE" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Exported service without permission (CWE-862) -->
+        <service android:name=".KeyService" android:exported="true" />
+
+        <!-- Exported provider, no read/write permission, grants URIs -->
+        <provider
+            android:name=".GalleryProvider"
+            android:authorities="com.example.demo.gallery"
+            android:exported="true"
+            android:grantUriPermissions="true" />
+
+        <!-- Properly guarded component (should NOT be flagged) -->
+        <activity
+            android:name=".SafeActivity"
+            android:exported="true"
+            android:permission="com.example.demo.permission.PRIVILEGED" />
+
+    </application>
+</manifest>
