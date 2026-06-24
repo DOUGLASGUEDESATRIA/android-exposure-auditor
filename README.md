@@ -51,18 +51,49 @@ $ python3 android_exposure_auditor.py examples/vulnerable_AndroidManifest.xml
 
 [HIGH] CWE-862  ContentProvider exported without permission
         component: .GalleryProvider (provider)
-        Any installed app can query/insert/update/delete through this provider.
+        Any installed app can query/insert/update/delete through this provider — no read/write permission is declared.
+        evidence: {"exported": true, "implicit": false}
 
 [MEDIUM] CWE-862  Browsable deep link reachable zero-permission
         component: .DeepLinkActivity (activity)
-        A web page or another app can drive this component via a demoapp: link.
+        A web page or another app can drive this component via a demoapp: link. Classic deep-link hijack / state-replay surface — validate every parameter.
+        evidence: {"schemes": ["demoapp"], "hosts": ["unlock"]}
+
+[MEDIUM] CWE-862  service exported without permission guard
+        component: .KeyService (service)
+        Reachable by any app via Intent. Confirm the component performs no privileged action and trusts no caller-supplied state.
+        evidence: {"exported": true, "implicit": false}
 
 [MEDIUM] CWE-862  receiver implicitly exported without permission guard
         component: .StateReceiver (receiver)
-        ...
+        Reachable by any app via Intent. Confirm the component performs no privileged action and trusts no caller-supplied state.
+        evidence: {"exported": true, "implicit": true}
+
+[MEDIUM] CWE-926  Provider grants URI permissions
+        component: .GalleryProvider (provider)
+        grantUriPermissions=true lets callers be handed temporary access to arbitrary URIs — review for confused-deputy reads.
+        evidence: {"grantUriPermissions": true}
+
+[LOW] CWE-862  activity exported without permission guard
+        component: .AdminActivity (activity)
+        Reachable by any app via Intent.
+
+[LOW] CWE-862  activity exported without permission guard
+        component: .DeepLinkActivity (activity)
+        Reachable by any app via Intent.
 ```
 
 A deliberately-vulnerable sample lives in [`examples/`](examples/).
+
+## CI Integration
+
+Gate your Android CI on zero-permission exposures — exits non-zero when findings at or above the threshold remain:
+
+```yaml
+# .github/workflows/security.yml
+- name: Audit Android manifest
+  run: python3 android_exposure_auditor.py app/src/main/AndroidManifest.xml --min-severity medium
+```
 
 ## Field-tested pattern
 
@@ -90,6 +121,7 @@ Douglas Guedes — security researcher (zero-permission / zero-click Android att
 
 - X: [@Douglaspguedes](https://x.com/Douglaspguedes)
 - Bugcrowd: [douglasninjaguedes](https://bugcrowd.com/douglasninjaguedes)
+- HackerOne: [douglasguedes](https://hackerone.com/douglasguedes)
 
 ## License
 
